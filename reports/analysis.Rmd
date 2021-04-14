@@ -1,7 +1,23 @@
+---
+title: "Energy Burden"
+author: "Forest Gregg"
+date: "AUTOFILL"
+output: pdf_document
+font_adjustment: +1
+always_allow_html: yes 
+---
+
+```{r setup}
+library(knitr)
 library(tidyverse)
 library(tidycensus)
 library(srvyr)
 
+options(scipen=999, digits=2)
+knitr::opts_chunk$set(echo = FALSE, cache = FALSE, max.print = -1)
+```
+
+```{r define_functions}
 get_knoxville_pums <- function(survey) {
     vars = c(
         "ELEFP", "ELEP", "HINCP", "GASFP", "GASP",
@@ -59,40 +75,54 @@ get_knoxville_pums <- function(survey) {
 
     return(knoxville_pums)
 }
+```
 
+```{r acs1}
 knoxville_pums <- get_knoxville_pums('acs1')
 
 knoxville_pums_filtered <- knoxville_pums %>% 
     filter(kub_burden >=0 & kub_burden <=1)
-    
-knoxville_pums_filtered %>% 
-    srvyr::survey_count(RACBLK_label, kub_burden > 0.1) %>%
-    pivot_wider(
-        RACBLK_label,
-        names_from="kub_burden > 0.1", 
-        values_from=n)
 
 tenure <- knoxville_pums_filtered %>%
     srvyr::survey_count(
         RACBLK_label,
         tenure,
         kub_burden > 0.1)
+```
 
+```{r black_non_black_table, results='asis'}    
+knoxville_pums_filtered %>% 
+    srvyr::survey_count(RACBLK_label, kub_burden > 0.1) %>%
+    pivot_wider(
+        RACBLK_label,
+        names_from="kub_burden > 0.1", 
+        values_from=n) %>%
+    kable()
+```
+
+```{r black_non_black_owner, results='asis'}
 tenure %>% 
     filter(tenure == 'Owner Occupied') %>%
     pivot_wider(
         RACBLK_label,
         names_from="kub_burden > 0.1",
-        values_from=n)
+        values_from=n) %>%
+    kable()
+```
 
+```{r black_non_black_renter, results='asis'}
 tenure %>% 
     filter(tenure == 'Renter Occupied') %>%
     pivot_wider(
         RACBLK_label,
         names_from="kub_burden > 0.1",
-        values_from=n)
+        values_from=n) %>%
+    kable()
+```
 
+```{r model}
 model <- survey::svyglm(
-    I(kub_burden > 0.1) ~ black * tenure, 
+    I(kub_burden > 0.1) ~ black + tenure, 
     design=knoxville_pums_filtered)
-
+summary(model)
+```
