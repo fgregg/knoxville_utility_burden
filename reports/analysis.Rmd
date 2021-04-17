@@ -197,7 +197,7 @@ tenure %>%
           caption = 'Utility Burdened Households by Race, Renter Occupied')
 ```
 
-The differences in the proportion of households that are energy burdened between 
+The differences in the proportion of households that are utility burdened between 
 owner occupied households and renter occupied households and the differences between
 Black and white households are all statistically significant at the 95% confidence level.
 
