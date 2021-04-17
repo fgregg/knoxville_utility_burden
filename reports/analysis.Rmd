@@ -98,6 +98,12 @@ knoxville_pums <- get_knoxville_pums('acs1')
 
 knoxville_pums_filtered <- knoxville_pums %>% 
     filter(kub_burden >=0 & kub_burden <=1)
+
+tenure <- knoxville_pums_filtered %>%
+    srvyr::survey_count(
+        race,
+        tenure,
+        kub_burden > 0.1)
 ```
 
 This report provides estimates of the proportion of Knoxville households that

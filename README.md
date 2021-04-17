@@ -12,7 +12,9 @@ conducted in 2019 for US Census's American Community Survey](https://www.census.
     - Ubuntu: `sudo apt install libx11-dev libglu1-mesa-dev`  
 * R (for R projects)
     - OS X: `brew install r`
-    - Ubuntu: `sudo apt install r-base littler` 
+    - Ubuntu: `sudo apt install r-base littler`
+* R libraries
+    - `make install/R`
 
 # Project Organization
 
