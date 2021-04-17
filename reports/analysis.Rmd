@@ -34,32 +34,38 @@ get_knoxville_pums <- function(survey) {
         rep_weights = "housing"
     )
 
+    # We want households to be our units, but get_pums returns
+    # one row per person, so we need to filter the data to
+    # just one row per household. We'll filter the data to
+    # select the row for the head of the household
     knoxville_pums <- knoxville_pums %>%
         filter(SPORDER == 1 & RELSHIPP_label == 'Reference person')
 
+    # Once we have one row per household, we can convert the
+    # data to a survey object, which will help us handle
+    # sample weights and standard errors
     knoxville_pums <- tidycensus::to_survey(knoxville_pums,
                                             type='housing')
 
+    # We are going to simplify the analysis by just looking
+    # Black and white folks
     knoxville_pums <- knoxville_pums %>%
         filter((RACBLK_label == 'Yes' | RACWHT_label == 'Yes') & 
                HISP_label == 'Not Spanish/Hispanic/Latino')
 
+    # Recode a missing value indicator
     knoxville_pums <- knoxville_pums %>%
         mutate(
-            HINCP = ifelse(HINCP == -60000, NA, HINCP),
-            ST = as.factor(ST),
-            ELEFP = as.factor(ELEFP),
-            GASFP = as.factor(GASFP),
-            TEN = as.factor(TEN),
-            WATFP = as.factor(WATFP),
-            RELSHIPP = as.factor(RELSHIPP),
-            RACBLK = as.factor(RACBLK))
+            HINCP = ifelse(HINCP == -60000, NA, HINCP))
 
     knoxville_pums <- knoxville_pums %>%
         mutate(
             race = ifelse(RACWHT_label == 'Yes', 'white', 'Black'),
             race = fct_relevel(race, "white"))
 
+    # The general practice in the literature is to code
+    # Occupied without payment of rent as a renter, when comparing
+    # owners and renters
     knoxville_pums <- knoxville_pums %>%
         mutate(
             tenure = case_when(TEN_label == 'Owned with mortgage or loan (include home equity loans)' ~ 'Owner Occupied',
@@ -92,12 +98,6 @@ knoxville_pums <- get_knoxville_pums('acs1')
 
 knoxville_pums_filtered <- knoxville_pums %>% 
     filter(kub_burden >=0 & kub_burden <=1)
-
-tenure <- knoxville_pums_filtered %>%
-    srvyr::survey_count(
-        race,
-        tenure,
-        kub_burden > 0.1)
 ```
 
 This report provides estimates of the proportion of Knoxville households that
