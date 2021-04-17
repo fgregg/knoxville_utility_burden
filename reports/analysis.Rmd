@@ -23,7 +23,7 @@ get_knoxville_pums <- function(survey) {
     vars = c(
         "ELEFP", "ELEP", "HINCP", "GASFP", "GASP",
         "WATFP", "WATP", "TEN", "RELSHIPP", "RACBLK",
-        "HISP", "RACWHT")
+        "HISP", "RACWHT", "FULFP")
     knoxville_pums <- tidycensus::get_pums(
         variables = vars,
         state = 'TN',
@@ -73,7 +73,6 @@ get_knoxville_pums <- function(survey) {
                                TEN_label == 'Rented' ~ 'Renter Occupied',
                                TEN_label == 'Occupied without payment of rent' ~ 'Renter Occupied'))
 
-    # what should we do about home heating oil people?
     knoxville_pums <- knoxville_pums %>% 
         mutate(
             kub_energy = (case_when(GASFP_label == 'Valid monthly gas cost in GASP' ~ GASP,
@@ -88,6 +87,10 @@ get_knoxville_pums <- function(survey) {
                                   TRUE ~ NA_real_),
             kub_utilities = kub_energy + kub_water,
             kub_burden = kub_utilities / HINCP)
+
+    # exclude households that use home heating oil
+    knoxville_pums <- knoxville_pums %>%
+        filter(FULFP_label == 'No charge or fuel other than gas or electricity not used')
 
     return(knoxville_pums)
 }
@@ -107,19 +110,21 @@ tenure <- knoxville_pums_filtered %>%
 ```
 
 This report provides estimates of the proportion of Knoxville households that
-are utility burdened, broken by race and housing
+are utility burdened, broken down by race and housing
 tenure. We use the 2019 1-year American Community Survey 
 Public Use Microdata Sample. These are a [sample of the individual surveys
 conducted in 2019 for US Census's American Community Survey](https://www.census.gov/programs-surveys/acs/microdata.html).
 
 We limit our analysis to households that are located in the City of Knoxville and
 households where water, electric, or gas bills are not included in the rent or condo fees, but paid
-separately. To simplify the analysis we consider only households headed by a Non-Hispanic
+separately. Households that use wood, heating oil, or something else other than gas or electric for heating are excluded. To simplify the analysis we consider only households headed by a Non-Hispanic
 white person or Non-Hispanic Black person.
 
 A household is utility burdened if the household's total water, gas, and 
-electric bills is greater than 10% of the annual household income. We only consider households
-where the utility burden is between 0% and 100% of their annual income. This excludes households
+electric bills is greater than 10% of the annual household income. The survey
+asks about last month's costs for electricity and gas, and for past 12 months' cost
+for water. Household income is reported annually. For this analysis, we annualize 
+the monthly electric and gas bill costs. We only consider households where the utility burden is between 0% and 100% of their annual income. This excludes households
 with negative income and some households that do not report credible utility bills or annual income.
 
 ```{r overall_table, results='asis'}    
