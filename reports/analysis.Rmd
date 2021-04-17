@@ -1,27 +1,29 @@
 ---
 title: "Energy Burden"
 author: "Forest Gregg"
-date: "AUTOFILL"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: pdf_document
 font_adjustment: +1
 always_allow_html: yes 
+urlcolor: blue
 ---
 
-```{r setup}
+```{r setup, echo = FALSE, message = FALSE}
 library(knitr)
 library(tidyverse)
 library(tidycensus)
 library(srvyr)
 
 options(scipen=999, digits=2)
-knitr::opts_chunk$set(echo = FALSE, cache = FALSE, max.print = -1)
+knitr::opts_chunk$set(echo = FALSE, cache = FALSE, message = FALSE, warning = FALSE, max.print = -1)
 ```
 
 ```{r define_functions}
 get_knoxville_pums <- function(survey) {
     vars = c(
         "ELEFP", "ELEP", "HINCP", "GASFP", "GASP",
-        "WATFP", "WATP", "TEN", "RELSHIPP", "RACBLK")
+        "WATFP", "WATP", "TEN", "RELSHIPP", "RACBLK",
+        "HISP", "RACWHT")
     knoxville_pums <- tidycensus::get_pums(
         variables = vars,
         state = 'TN',
@@ -39,6 +41,10 @@ get_knoxville_pums <- function(survey) {
                                             type='housing')
 
     knoxville_pums <- knoxville_pums %>%
+        filter((RACBLK_label == 'Yes' | RACWHT_label == 'Yes') & 
+               HISP_label == 'Not Spanish/Hispanic/Latino')
+
+    knoxville_pums <- knoxville_pums %>%
         mutate(
             HINCP = ifelse(HINCP == -60000, NA, HINCP),
             ST = as.factor(ST),
@@ -47,8 +53,12 @@ get_knoxville_pums <- function(survey) {
             TEN = as.factor(TEN),
             WATFP = as.factor(WATFP),
             RELSHIPP = as.factor(RELSHIPP),
-            RACBLK = as.factor(RACBLK),
-            black = RACBLK_label == 'Yes')
+            RACBLK = as.factor(RACBLK))
+
+    knoxville_pums <- knoxville_pums %>%
+        mutate(
+            race = ifelse(RACWHT_label == 'Yes', 'white', 'Black'),
+            race = fct_relevel(race, "white"))
 
     knoxville_pums <- knoxville_pums %>%
         mutate(
@@ -77,7 +87,7 @@ get_knoxville_pums <- function(survey) {
 }
 ```
 
-```{r acs1}
+```{r acs1, include=FALSE}
 knoxville_pums <- get_knoxville_pums('acs1')
 
 knoxville_pums_filtered <- knoxville_pums %>% 
@@ -85,44 +95,109 @@ knoxville_pums_filtered <- knoxville_pums %>%
 
 tenure <- knoxville_pums_filtered %>%
     srvyr::survey_count(
-        RACBLK_label,
+        race,
         tenure,
         kub_burden > 0.1)
 ```
 
-```{r black_non_black_table, results='asis'}    
+This report provides estimates of the proportion of Knoxville households that
+are utility burdened, broken by race and housing
+tenure. We use the 2019 1-year American Community Survey 
+Public Use Microdata Sample. These are a [sample of the individual surveys
+conducted in 2019 for US Census's American Community Survey](https://www.census.gov/programs-surveys/acs/microdata.html).
+
+We limit our analysis to households that are located in the City of Knoxville and
+households where water, electric, or gas bills are not included in the rent or condo fees, but paid
+separately. To simplify the analysis we consider only households headed by a Non-Hispanic
+white person or Non-Hispanic Black person.
+
+A household is utility burdened if the household's total water, gas, and 
+electric bills is greater than 10% of the annual household income. We only consider households
+where the utility burden is between 0% and 100% of their annual income. This excludes households
+with negative income and some households that do not report credible utility bills or annual income.
+
+```{r overall_table, results='asis'}    
 knoxville_pums_filtered %>% 
-    srvyr::survey_count(RACBLK_label, kub_burden > 0.1) %>%
+    srvyr::survey_count(kub_burden > 0.1) %>%
+    select("kub_burden > 0.1", n) %>%
     pivot_wider(
-        RACBLK_label,
         names_from="kub_burden > 0.1", 
         values_from=n) %>%
-    kable()
+    as.matrix() %>%
+    proportions(margin=1) %>% 
+    kable(col.names = c('Not utility burdened', 'Utility Burdened'),
+          caption = 'Utility Burdened Households')
 ```
+
+
+```{r black_non_black_table, results='asis'}    
+knoxville_pums_filtered %>% 
+    srvyr::survey_count(race, kub_burden > 0.1) %>%
+    pivot_wider(
+        race,
+        names_from="kub_burden > 0.1", 
+        values_from=n) %>%
+    column_to_rownames('race') %>%
+    as.matrix() %>%
+    proportions(margin=1) %>% 
+    kable(col.names = c('Not utility burdened', 'Utility Burdened'),
+          row.names = TRUE,
+          caption = 'Utility Burdened Households by Race')
+```
+
+```{r tenure_table, results='asis'}    
+knoxville_pums_filtered %>% 
+    srvyr::survey_count(tenure, kub_burden > 0.1) %>%
+    pivot_wider(
+        tenure,
+        names_from="kub_burden > 0.1", 
+        values_from=n) %>%
+    column_to_rownames('tenure') %>%
+    as.matrix() %>%
+    proportions(margin=1) %>% 
+    kable(col.names = c('Not utility burdened', 'Utility Burdened'),
+          row.names = TRUE,
+          caption = 'Utility Burdened Households by Tenure')
+```
+
 
 ```{r black_non_black_owner, results='asis'}
 tenure %>% 
     filter(tenure == 'Owner Occupied') %>%
     pivot_wider(
-        RACBLK_label,
+        race,
         names_from="kub_burden > 0.1",
         values_from=n) %>%
-    kable()
+    column_to_rownames('race') %>%
+    as.matrix() %>%
+    proportions(margin=1) %>% 
+    kable(col.names = c('Not utility burdened', 'Utility Burdened'),
+          row.names = TRUE,
+          caption = 'Utility Burdened Households by Race, Owner Occupied')
 ```
 
 ```{r black_non_black_renter, results='asis'}
 tenure %>% 
     filter(tenure == 'Renter Occupied') %>%
     pivot_wider(
-        RACBLK_label,
+        race,
         names_from="kub_burden > 0.1",
         values_from=n) %>%
-    kable()
+    column_to_rownames('race') %>%
+    as.matrix() %>%
+    proportions(margin=1) %>% 
+    kable(col.names = c('Not utility burdened', 'Utility Burdened'),
+          row.names = TRUE,
+          caption = 'Utility Burdened Households by Race, Renter Occupied')
 ```
 
-```{r model}
+The differences in the proportion of households that are energy burdened between 
+owner occupied households and renter occupied households and the differences between
+Black and white households are all statistically significant at the 95% confidence level.
+
+```{r model, include=FALSE}
 model <- survey::svyglm(
-    I(kub_burden > 0.1) ~ black + tenure, 
+    I(kub_burden > 0.1) ~ race + tenure, 
     design=knoxville_pums_filtered)
 summary(model)
 ```
