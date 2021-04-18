@@ -19,7 +19,8 @@ Public Use Microdata Sample.
 
     ├── Makefile           <- Makefile with commands like `make all`
     ├── README.md          <- The top-level README for contributors using this project.
-    ├── reports            <- R Markdown (.rmd) files and associated outputs.
+    ├── reports            <- R Markdown (.Rmd) files and associated outputs.
+    ├── processors         <- Scripts for transforming R Markdown files to PDFs and other outputs
     └── install.R          <- Install R dependencies
 
 # To build report
