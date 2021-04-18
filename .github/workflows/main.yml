@@ -20,4 +20,6 @@ jobs:
       - name: install
         run: make install/R
       - name: build report
+        env:
+          CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
         run: make
