@@ -19,6 +19,7 @@ Public Use Microdata Sample.
 
     ├── Makefile           <- Makefile with commands like `make all`
     ├── README.md          <- The top-level README for contributors using this project.
+    ├── Dockerfile         <- Dockerfile to setup the environment for building the report
     ├── reports            <- R Markdown (.Rmd) files and associated outputs.
     ├── processors         <- Scripts for transforming R Markdown files to PDFs and other outputs
     └── install.R          <- Install R dependencies
