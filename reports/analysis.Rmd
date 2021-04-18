@@ -9,6 +9,7 @@ urlcolor: blue
 ---
 
 ```{r setup, echo = FALSE, message = FALSE}
+flargh()
 library(knitr)
 library(tidyverse)
 library(tidycensus)
