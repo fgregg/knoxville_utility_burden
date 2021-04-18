@@ -1,5 +1,5 @@
 ---
-title: "Utility Burdens in Knoxville Households"
+title: "Utility Burdens in Knoxville Households, hot sauce"
 author: "Forest Gregg"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: pdf_document
