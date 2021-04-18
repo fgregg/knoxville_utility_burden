@@ -10,13 +10,9 @@ jobs:
   render_document:
     runs-on: ubuntu-latest
     container:
-      image: rocker/verse
-      volumes: 
-        - ${{ github.workspace }}:/workspace      
+      image: docker.pkg.github.com/fgregg/knoxville_utility_burden/kub:1.0
     steps:
       - uses: actions/checkout@v2
-      - name: install system dependencies
-        run: sudo apt-get update && sudo apt-get install libudunits2-dev libgdal-dev -y
       - name: install
         run: make install/R
       - name: build report
