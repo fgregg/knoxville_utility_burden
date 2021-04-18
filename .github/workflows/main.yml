@@ -23,3 +23,7 @@ jobs:
         env:
           CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
         run: make
+      - uses: actions/upload-artifact@v2
+        with:
+          name: analysis
+          path: reports/analysis.pdf
