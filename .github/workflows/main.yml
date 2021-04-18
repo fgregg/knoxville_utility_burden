@@ -19,7 +19,12 @@ jobs:
         env:
           CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
         run: make
-      - uses: actions/upload-artifact@v2
+      - name: setup directory
+        run: |
+          mkdir public
+          mv reports/*.pdf public
+      - name: Github Pages Deploy
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          name: analysis
-          path: reports/analysis.pdf
+           github_token: ${{ secrets.GITHUB_TOKEN }}
+           publish_dir: ./public
