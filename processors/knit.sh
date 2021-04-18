@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ### Test usage; if incorrect, output correct usage and exit
 if [ "$#" -gt 2  -o  "$#" -lt 2 ]; then
