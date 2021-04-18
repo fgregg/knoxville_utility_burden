@@ -14,6 +14,6 @@ jobs:
         with:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          registry: docker.pkg.github.com
+          registry: ghcr.io
           repository: fgregg/knoxville_utility_burden/kub
           tag_with_ref: true
