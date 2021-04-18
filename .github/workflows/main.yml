@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
-runs:
-  using: 'docker'
-  image: 'Dockerfile'
+jobs:
+  render_document:
+    container:
+      image: rocker/verse
+    steps:
+      - name: install
+        run: make install/R
