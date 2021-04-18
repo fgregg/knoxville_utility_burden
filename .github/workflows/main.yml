@@ -14,5 +14,6 @@ jobs:
       volumes: 
         - ${{ github.workspace }}:/workspace      
     steps:
+      - uses: actions/checkout@v2
       - name: install
-        run: make -d
+        run: make install/R
