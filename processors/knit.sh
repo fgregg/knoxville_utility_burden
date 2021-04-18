@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 ### Test usage; if incorrect, output correct usage and exit
 if [ "$#" -gt 2  -o  "$#" -lt 2 ]; then
@@ -8,7 +9,7 @@ if [ "$#" -gt 2  -o  "$#" -lt 2 ]; then
     echo -e "The 'knit' script converts rmd files into HTML or PDFs. \n"
     echo -e "usage: knit.sh file.rmd file.{pdf,html} \n"
     echo -e "Spaces in the filename or directory name may cause failure. \n"
-    exit
+    exit 1
 fi
 # Stem and extension of file
 extension1=`echo $1 | cut -f2 -d.`
@@ -17,13 +18,13 @@ extension2=`echo $2 | cut -f2 -d.`
 ### Test if file exist
 if [[ ! -r $1 ]]; then
     echo -e "\n File does not exist, or option mispecified \n"
-    exit
+    exit 1
 fi
 
 ### Test file extension
 if [[ $extension1 != Rmd ]]; then
     echo -e "\n Invalid input file, must be a rmd-file \n"
-    exit
+    exit 1
 fi
 
 # Create temporary script
