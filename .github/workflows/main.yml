@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: install system dependencies
-        run: sudo apt-get update -n && sudo apt-get install units
+        run: sudo apt-get update -n && sudo apt-get install units -y
       - name: install
         run: make install/R
       - name: build report
