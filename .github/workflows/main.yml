@@ -17,3 +17,5 @@ jobs:
       - uses: actions/checkout@v2
       - name: install
         run: make install/R
+      - name: build report
+        run: make
