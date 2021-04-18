@@ -8,6 +8,7 @@ on:
 
 jobs:
   render_document:
+    runs-on: ubuntu-latest
     container:
       image: rocker/verse
     steps:
