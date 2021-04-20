@@ -13,9 +13,10 @@ library(knitr)
 library(tidyverse)
 library(tidycensus)
 library(srvyr)
+library(readxl)
 
 options(scipen=999, digits=2)
-knitr::opts_chunk$set(echo = FALSE, cache = FALSE, message = FALSE, warning = FALSE, max.print = -1)
+knitr::opts_chunk$set(echo = FALSE, cache = TRUE, message = FALSE, warning = FALSE, max.print = -1)
 ```
 
 ```{r define_functions}
@@ -109,7 +110,13 @@ tenure <- knoxville_pums_filtered %>%
         kub_burden > 0.1)
 ```
 
-This report provides estimates of the proportion of Knoxville households that
+Forty percent of Black households are utility burdened, and 50% of Black renters.
+Census tracts that have high proportions of Black households have much higher rates
+of utility disconnections. 
+
+## Utility Burden
+
+Here, we estimate the proportion of Knoxville households that
 are utility burdened, broken down by race and housing
 tenure. We use the 2019 1-year American Community Survey 
 Public Use Microdata Sample. These are a [sample of the individual surveys
@@ -212,3 +219,88 @@ model <- survey::svyglm(
     design=knoxville_pums_filtered)
 summary(model)
 ```
+
+```{r disconnects, include=FALSE}
+disconnects <- readxl::read_excel('../data/KUB Residential Properties with Service Disconnections - Oct 20 - Feb 21.xlsx')
+disconnects <- disconnects %>%
+    mutate(GEOID = as.character(`Census Tract` * 100 + 47093000000),
+           `Number of Residential Properties Disconnected` = replace_na(`Number of Residential Properties Disconnected`, 0))
+
+# get num households
+# households led by African American
+knox_county_tracts <- tidycensus::get_acs(
+    geography = "tract",
+    variables = c("B25006_001", "B25006_003"),
+    state = "TN",
+    county = "Knox",
+    output = "wide",
+    geometry = TRUE)
+
+knox_county_tracts <- knox_county_tracts %>%
+    inner_join(disconnects, by='GEOID') %>%
+    mutate(disconnects_per_household = `Number of Residential Properties Disconnected`/B25006_001E * (12/5),
+           black_household_proportion = B25006_003E/B25006_001E)
+
+# Only consider tracts that have area that is more
+# than 90% within Knoxville
+knoxville <- tigris::places('TN') %>%
+    filter(NAME == 'Knoxville')    
+
+knoxville_tracts <- knox_county_tracts %>%
+    sf::st_intersection(knoxville) %>%
+    select(GEOID)
+
+knoxville_tracts = knox_county_tracts %>%
+    inner_join(as.data.frame(knoxville_tracts), by='GEOID') %>%
+    filter(as.numeric(sf::st_area(geometry.y)/sf::st_area(geometry.x)) > 0.5) %>%
+    mutate(geometry=geometry.x) %>%
+    select(-c(geometry.x, geometry.y))
+```
+## Disconnections
+Census tracts with higher proportions of Black householders have much higher rates of disconnections.
+
+The Knoxville Utility Board provided counts of the number utility disconnections
+per census tract between October 1, 2020 and February 28, 2021. For ease of explanation,
+we annualize these counts, and limit tracts to ones that are more than 50% within the city limits of Knoxville.
+
+Rates of disconnection are higher in the central city and historic Black
+neighborhoods (Figure 1).
+
+
+```{r total_disconnects_map, fig.cap="Knoxville Census Tracts"}
+ggplot() +
+    geom_sf(data=knoxville) +
+    geom_sf(data=knoxville_tracts, aes(fill = disconnects_per_household * 100), size = 0.25) + 
+    coord_sf(crs = st_crs(2274)) + 
+    scale_fill_viridis_c() +     
+    theme_void() +
+    labs(fill = "Annual disconnects\nper 100 households")
+```
+
+```{r disconnect_race_relation_model}
+tract_model <- lm(
+    (disconnects_per_household * 100) ~ black_household_proportion,
+    data = knoxville_tracts)
+
+predict_rate <- function(proportion) {
+    return(predict(tract_model, data.frame(black_household_proportion=c(proportion))))
+}
+```
+
+Census tracts with a higher proportion of Black householders have
+much higher rates of utility disconnection. On average, a census tract
+which is 20% Black householders will have about `r round(predict_rate(0.2))` disconnections 
+per 100 households every year, while a census tract that is 80% Black householders
+will have about `r round(predict_rate(0.8))` (Figure 2).
+
+```{r disconnect_race_relation_graph, fig.cap="Rates of Disconnection and Proportion of Black householders"}
+ggplot(knoxville_tracts,
+       aes(black_household_proportion, 
+           disconnects_per_household * 100)) + 
+    geom_point() +
+    geom_smooth(method='lm') +
+    xlab('Proportion of Householders who are Black') +
+    ylab('Annual disconnects per 100 households')
+
+```
+
