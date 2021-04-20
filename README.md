@@ -1,7 +1,5 @@
 # Utility Burden in Knoxville
-[This report provides estimates of the proportion of Knoxville households that
-are utility burdened, broken down by race and housing
-tenure](https://bunkum.us/knoxville_utility_burden/analysis.pdf). We use the 2019 1-year American Community Survey 
+[This report describes racial disparities in utility burdens of Knoxville households](https://bunkum.us/knoxville_utility_burden/analysis.pdf). We use the 2019 1-year American Community Survey 
 Public Use Microdata Sample.
 
 # Requirements
