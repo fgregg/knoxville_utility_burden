@@ -8,7 +8,7 @@ RUN apt-get update \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \
   && install2.r --error --deps TRUE \
-    tidycensus srvyr \
+    tidycensus srvyr lwgeom \
   && tlmgr install \
     amsmath \
     latex-amsmath-dev \
