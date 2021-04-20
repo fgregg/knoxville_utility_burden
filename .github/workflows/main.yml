@@ -10,7 +10,7 @@ jobs:
   render_document:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/fgregg/knoxville_utility_burden/kub:latest
+      image: ghcr.io/fgregg/knoxville_utility_burden/kub
     steps:
       - uses: actions/checkout@v2
       - name: install
