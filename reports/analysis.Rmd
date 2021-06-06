@@ -14,6 +14,7 @@ library(tidyverse)
 library(tidycensus)
 library(srvyr)
 library(readxl)
+library(lwgeom)
 
 options(scipen=999, digits=2)
 knitr::opts_chunk$set(echo = FALSE, cache = TRUE, message = FALSE, warning = FALSE, max.print = -1)

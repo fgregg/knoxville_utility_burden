@@ -7,8 +7,7 @@ RUN apt-get update \
      libgdal-dev \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \
-  && install2.r --error --deps TRUE \
-    tidycensus srvyr lwgeom \
+  && tlmgr update --self \
   && tlmgr install \
     amsmath \
     latex-amsmath-dev \
@@ -44,5 +43,6 @@ RUN apt-get update \
 RUN mkdir /app
 WORKDIR /app
 COPY . /app
+RUN make install/R
 
 ENTRYPOINT ["make"]
